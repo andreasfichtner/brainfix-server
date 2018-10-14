@@ -84,8 +84,10 @@ class MainController {
         var user: User? = null
 
         if(username != null) {
-            user = userRepository?.findByUsername(username)
-            userExists = user != null
+            userExists = userRepository?.existsByUsername(username)!!
+            if(userExists) {
+                user = userRepository?.findByUsername(username)
+            }
         }
 
         val passwordEncoder = BCryptPasswordEncoder()
@@ -127,8 +129,10 @@ class MainController {
             return "No many parameter. Fix brain!";
         }
 
-        val accessToken = accessTokenRepository?.findByToken(token)
-
+        var accessToken: AccessToken? = null
+        if(accessTokenRepository?.existsByToken(token)!!) {
+            accessToken = accessTokenRepository?.findByToken(token)
+        }
 
         if (accessToken == null || !accessToken.valid) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
@@ -167,11 +171,12 @@ class MainController {
         for(note in list) {
             note.dateSync = Utilities.getCurrentDateString()
             note.userId = accessToken.userId
-            val existingNote = noteRepository!!.findByUuid(note.uuid!!)
-            if(existingNote == null) {
+            val noteExists = noteRepository?.existsByUuid(note.uuid!!)
+            if(noteExists!!) {
                 note.id = null
                 noteRepository?.save(note)
             } else {
+                val existingNote = noteRepository!!.findByUuid(note.uuid!!)
                 existingNote.content = note.content
                 existingNote.dateModified = note.dateModified
                 noteRepository?.save(existingNote)

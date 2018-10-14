@@ -10,4 +10,5 @@ interface NoteRepository : CrudRepository<Note, Long> {
     @Query("from Note where userId=:userId AND dateSync > :dateFrom")
     public fun findAllByUserIdSinceDate(@Param("userId") userId: Long, @Param("dateFrom")date: String) : Iterable<Note>
     public fun findByUuid(uuid: String) : Note
+    public fun existsByUuid(uuid: String) : Boolean
 }
