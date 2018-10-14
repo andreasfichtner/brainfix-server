@@ -11,9 +11,13 @@ import de.retterdesapok.brainfix.entities.AccessToken
 import de.retterdesapok.brainfix.entities.Note
 import de.retterdesapok.brainfix.entities.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.EnableWebMvc
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.util.*
 import javax.servlet.http.HttpServletResponse
 
@@ -27,6 +31,14 @@ class MainController {
     private val accessTokenRepository: AccessTokenRepository? = null
     @Autowired
     private val noteRepository: NoteRepository? = null
+
+    @Configuration
+    @EnableWebMvc
+    open class WebConfig: WebMvcConfigurer {
+        override fun addCorsMappings(registry: CorsRegistry) {
+            registry.addMapping("/**")
+        }
+    }
 
     @RequestMapping(path = arrayOf("/api/createtestuser"))
     @ResponseBody
@@ -46,7 +58,7 @@ class MainController {
         note.encryptionType = 0
         note.userId = anton.id!!
         note.uuid = UUID.randomUUID().toString()
-        note = noteRepository?.save(note)!!
+        noteRepository?.save(note)!!
 
         val allUsers = userRepository?.findAll()
 
