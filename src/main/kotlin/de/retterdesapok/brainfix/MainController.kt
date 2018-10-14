@@ -159,9 +159,13 @@ class MainController {
             return "More parameters! Bad brain. Fix brain.";
         }
 
-        val accessToken = accessTokenRepository?.findByToken(token)
+        var accessToken: AccessToken? = null
+        if(accessTokenRepository?.existsByToken(token)!!) {
+            accessToken = accessTokenRepository?.findByToken(token)
+        }
 
         if (accessToken == null || !accessToken.valid) {
+            response.status = HttpServletResponse.SC_UNAUTHORIZED
             return "This no valid token. Fix brain!";
         }
 
@@ -172,7 +176,7 @@ class MainController {
             note.dateSync = Utilities.getCurrentDateString()
             note.userId = accessToken.userId
             val noteExists = noteRepository?.existsByUuid(note.uuid!!)
-            if(noteExists!!) {
+            if(!noteExists!!) {
                 note.id = null
                 noteRepository?.save(note)
             } else {
