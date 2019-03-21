@@ -66,7 +66,7 @@ class MainController {
         return json.writeValueAsString(allUsers)
     }
 
-    @RequestMapping(value = "/test")
+    @RequestMapping(value = ["/test"])
     @ResponseBody
     fun testPage(): String {
         return "Test"
