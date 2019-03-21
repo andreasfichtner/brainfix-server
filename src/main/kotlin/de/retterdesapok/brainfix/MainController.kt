@@ -191,6 +191,8 @@ class MainController {
         return json.writeValueAsString("OK")
     }
 
+    // TODO delete notes by uuid
+
     @ResponseBody
     fun errorPage(model: MutableMap<String, Any>): String {
         return "error"
