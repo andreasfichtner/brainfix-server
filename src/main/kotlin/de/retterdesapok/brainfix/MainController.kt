@@ -79,8 +79,10 @@ class MainController {
     @ResponseBody
     fun doLogin(response: HttpServletResponse,
                 model: MutableMap<String, Any>,
-                @RequestParam("username") username: String?,
-                @RequestParam("password") password: String?): String {
+                @RequestBody data : Map<String, String>): String {
+
+        var username = data["username"]
+        var password = data["password"]
 
         var user: User? = null
 
@@ -116,9 +118,10 @@ class MainController {
     @ResponseBody
     fun doRegister(response: HttpServletResponse,
                 model: MutableMap<String, Any>,
-                @RequestParam("username") username: String?,
-                @RequestParam("password") password: String?): String {
+                   @RequestBody data : Map<String, String>): String {
 
+        var username = data["username"]
+        var password = data["password"]
         var user: User? = null
 
         if(username == null || password == null ||password.length == 0) {
@@ -155,8 +158,10 @@ class MainController {
     @ResponseBody
     fun getNotes(response: HttpServletResponse,
                  model: MutableMap<String, Any>,
-                 @RequestParam("token") token: String?,
-                 @RequestParam("lastSync") dateLastSync: String?): String {
+                 @RequestBody data : Map<String, String>): String {
+
+        var token = data["token"]
+        var dateLastSync = data["lastSync"]
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
 
