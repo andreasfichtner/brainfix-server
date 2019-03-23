@@ -122,6 +122,7 @@ class MainController {
         var user: User? = null
 
         if(username == null || password == null ||password.length == 0) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
             return "Registering without a user name or password is stupid. Fix brain!";
         }
 
