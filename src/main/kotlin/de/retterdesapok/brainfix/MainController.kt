@@ -40,6 +40,7 @@ class MainController {
         }
     }
 
+    @CrossOrigin
     @RequestMapping(path = arrayOf("/api/createtestuser"))
     @ResponseBody
     fun createAnton(): String {
@@ -60,49 +61,43 @@ class MainController {
         note.uuid = UUID.randomUUID().toString()
         noteRepository?.save(note)!!
 
-        val allUsers = userRepository?.findAll()
+        val allUsers = userRepository.findAll()
 
         val json = ObjectMapper().registerModule(KotlinModule())
         return json.writeValueAsString(allUsers)
     }
 
+    @CrossOrigin
     @RequestMapping(value = ["/test"])
     @ResponseBody
     fun testPage(): String {
         return "Test"
     }
 
-    @RequestMapping("/api/requestToken")
+    @CrossOrigin
+    @RequestMapping("/api/login")
     @ResponseBody
     fun doLogin(response: HttpServletResponse,
                 model: MutableMap<String, Any>,
                 @RequestParam("username") username: String?,
                 @RequestParam("password") password: String?): String {
 
-        var userExists = false
-        var passwordCorrect = false
         var user: User? = null
 
-        if(username != null) {
-            userExists = userRepository?.existsByUsername(username)!!
-            if(userExists) {
-                user = userRepository?.findByUsername(username)
-            }
+        if(username != null && userRepository?.existsByUsername(username)!!) {
+            user = userRepository?.findByUsername(username)
+        }
+
+        if(user == null) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return "User does not exist. Fix brain!";
         }
 
         val passwordEncoder = BCryptPasswordEncoder()
 
-        if(userExists) {
-            if(!passwordEncoder.matches(password, user?.passwordHash)) {
-                response.status = HttpServletResponse.SC_UNAUTHORIZED
-                return "Password incorrect. Fix brain!";
-            }
-        } else {
-            user = User()
-            user.username = username!!
-            user.passwordHash = passwordEncoder.encode(password)
-            user.isActive = true
-            userRepository?.save(user)
+        if (!passwordEncoder.matches(password, user?.passwordHash)) {
+            response.status = HttpServletResponse.SC_UNAUTHORIZED
+            return "Password incorrect. Fix brain!";
         }
 
         val accessToken = AccessToken()
@@ -116,6 +111,45 @@ class MainController {
         return createdToken
     }
 
+    @CrossOrigin
+    @RequestMapping("/api/register")
+    @ResponseBody
+    fun doRegister(response: HttpServletResponse,
+                model: MutableMap<String, Any>,
+                @RequestParam("username") username: String?,
+                @RequestParam("password") password: String?): String {
+
+        var user: User? = null
+
+        if(username == null || password == null ||password.length == 0) {
+            return "Registering without a user name or password is stupid. Fix brain!";
+        }
+
+        if(userRepository?.existsByUsername(username)!!) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return "User already exists. Fix brain!";
+        }
+
+        val passwordEncoder = BCryptPasswordEncoder()
+
+        user = User()
+        user.username = username!!
+        user.passwordHash = passwordEncoder.encode(password)
+        user.isActive = true
+        userRepository?.save(user)
+
+        val accessToken = AccessToken()
+        accessToken.userId = user!!.id!!
+        val createdToken = UUID.randomUUID().toString()
+        accessToken.token = createdToken
+        accessToken.valid = true
+        accessTokenRepository?.save(accessToken)
+
+        response.status = HttpServletResponse.SC_OK
+        return createdToken
+    }
+
+    @CrossOrigin
     @RequestMapping("/api/getNotes")
     @ResponseBody
     fun getNotes(response: HttpServletResponse,
@@ -131,7 +165,7 @@ class MainController {
 
         var accessToken: AccessToken? = null
         if(accessTokenRepository?.existsByToken(token)!!) {
-            accessToken = accessTokenRepository?.findByToken(token)
+            accessToken = accessTokenRepository.findByToken(token)
         }
 
         if (accessToken == null || !accessToken.valid) {
@@ -146,6 +180,7 @@ class MainController {
         return json.writeValueAsString(notes)
     }
 
+    @CrossOrigin
     @RequestMapping("/api/setNotes")
     @ResponseBody
     fun setNotes(response: HttpServletResponse,
@@ -161,7 +196,7 @@ class MainController {
 
         var accessToken: AccessToken? = null
         if(accessTokenRepository?.existsByToken(token)!!) {
-            accessToken = accessTokenRepository?.findByToken(token)
+            accessToken = accessTokenRepository.findByToken(token)
         }
 
         if (accessToken == null || !accessToken.valid) {
@@ -183,7 +218,7 @@ class MainController {
                 val existingNote = noteRepository!!.findByUuid(note.uuid!!)
                 existingNote.content = note.content
                 existingNote.dateModified = note.dateModified
-                noteRepository?.save(existingNote)
+                noteRepository.save(existingNote)
             }
         }
 
@@ -193,6 +228,7 @@ class MainController {
 
     // TODO delete notes by uuid
 
+    @CrossOrigin
     @ResponseBody
     fun errorPage(model: MutableMap<String, Any>): String {
         return "error"
