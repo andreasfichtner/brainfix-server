@@ -1,27 +1,24 @@
 package de.retterdesapok.brainfix
 
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.util.*
+import java.time.*
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
-
-
-
-
 
 class Utilities {
     companion object {
 
         fun getDateStringYesterday(): String {
-            var yesterday = LocalDate.now().minusDays(1)
-            return yesterday.format(DateTimeFormatter.ISO_INSTANT)
+            val yesterday = LocalDateTime.now().minusDays(1).withSecond(0).withNano(0)
+            return getStringFromLocalDateTime(yesterday)
         }
 
         fun getDateStringNow(): String {
-            return LocalDate.now().format(DateTimeFormatter.ISO_INSTANT)
+            val now = LocalDateTime.now().withSecond(0)
+            return getStringFromLocalDateTime(now)
+        }
+
+        fun getStringFromLocalDateTime(dateTime: LocalDateTime): String {
+            val zonedDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault()).format(DateTimeFormatter.ISO_INSTANT)
+            return zonedDateTime.format(DateTimeFormatter.ISO_INSTANT)
         }
     }
 }

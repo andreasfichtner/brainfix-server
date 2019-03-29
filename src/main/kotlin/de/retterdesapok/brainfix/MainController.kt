@@ -194,6 +194,7 @@ class MainController {
         val list: List<Note> = json.readValue<List<Note>>(jsonData)
         for(note in list) {
             note.dateSync = Utilities.getDateStringNow()
+            note.synchronized = true
             note.userId = accessToken.userId
             val noteExists = noteRepository?.existsByUuid(note.uuid!!)
             if(!noteExists!!) {

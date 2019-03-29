@@ -16,4 +16,5 @@ class Note {
     var dateCreated: String? = null
     var dateModified: String? = null
     var dateSync: String? = null
+    var synchronized: Boolean = true
 }
