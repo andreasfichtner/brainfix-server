@@ -11,5 +11,6 @@ class User {
     var id: Long? = null
     var username: String = ""
     var passwordHash: String = ""
+    var failedLogins: Long = 0
     var isActive: Boolean = false
 }

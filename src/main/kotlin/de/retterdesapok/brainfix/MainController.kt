@@ -81,7 +81,6 @@ class MainController {
                 model: MutableMap<String, Any>,
                 @RequestBody data : Map<String, String>): String {
 
-        Thread.sleep(1000)
 
         var username = data["username"]
         var password = data["password"]
@@ -92,16 +91,24 @@ class MainController {
             user = userRepository?.findByUsername(username)
         }
 
+        response.status = HttpServletResponse.SC_BAD_REQUEST
         if(user == null) {
-            response.status = HttpServletResponse.SC_BAD_REQUEST
             return "User does not exist. Fix brain!";
+        } else if (user.failedLogins > 3) {
+            return "Too many failed logins. Check brain and come again."
         }
+
 
         val passwordEncoder = BCryptPasswordEncoder()
 
         if (!passwordEncoder.matches(password, user?.passwordHash)) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
-            return "Password incorrect. Fix brain!";
+            user.failedLogins += 1
+            userRepository?.save(user)
+            return "Password incorrect. Fix brain!"
+        } else if (user.failedLogins > 0){
+            user.failedLogins = 0
+            userRepository?.save(user)
         }
 
         val accessToken = AccessToken()
@@ -160,7 +167,7 @@ class MainController {
     @ResponseBody
     fun getNotes(response: HttpServletResponse,
                  model: MutableMap<String, Any>,
-                 @RequestParam("token") token: String?,
+                 @RequestHeader("token") token: String?,
                  @RequestBody data : Map<String, String>): String {
 
         var dateLastSync = data["lastSync"]
@@ -193,7 +200,7 @@ class MainController {
     @ResponseBody
     fun setNotes(response: HttpServletResponse,
                  model: MutableMap<String, Any>,
-                 @RequestParam("token") token: String?,
+                 @RequestHeader("token") token: String?,
                  @RequestBody jsonData: String?): String {
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
