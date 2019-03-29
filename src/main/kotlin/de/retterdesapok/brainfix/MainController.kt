@@ -81,6 +81,8 @@ class MainController {
                 model: MutableMap<String, Any>,
                 @RequestBody data : Map<String, String>): String {
 
+        Thread.sleep(1000)
+
         var username = data["username"]
         var password = data["password"]
 
@@ -158,9 +160,9 @@ class MainController {
     @ResponseBody
     fun getNotes(response: HttpServletResponse,
                  model: MutableMap<String, Any>,
+                 @RequestParam("token") token: String?,
                  @RequestBody data : Map<String, String>): String {
 
-        var token = data["token"]
         var dateLastSync = data["lastSync"]
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
