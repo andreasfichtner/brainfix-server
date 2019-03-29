@@ -53,9 +53,9 @@ class MainController {
 
         var note = Note()
         note.content = "Testnotiz für #Anton"
-        note.dateCreated = Utilities.getCurrentDateString()
-        note.dateModified = Utilities.getCurrentDateString()
-        note.dateSync = Utilities.getCurrentDateString()
+        note.dateCreated = Utilities.getDateStringNow()
+        note.dateModified = Utilities.getDateStringNow()
+        note.dateSync = Utilities.getDateStringNow()
         note.encryptionType = 0
         note.userId = anton.id!!
         note.uuid = UUID.randomUUID().toString()
@@ -106,7 +106,7 @@ class MainController {
             user.failedLogins += 1
             userRepository?.save(user)
             return "Password incorrect. Fix brain!"
-        } else if (user.failedLogins > 0){
+        } else if (user.failedLogins > 0 && user.lastLogin > Utilities.getDateStringYesterday()) {
             user.failedLogins = 0
             userRepository?.save(user)
         }
@@ -163,9 +163,9 @@ class MainController {
     }
 
     @CrossOrigin
-    @RequestMapping("/api/getNotes")
+    @RequestMapping("/api/notes")
     @ResponseBody
-    fun getNotes(response: HttpServletResponse,
+    fun syncNotes(response: HttpServletResponse,
                  model: MutableMap<String, Any>,
                  @RequestHeader("token") token: String?,
                  @RequestBody data : Map<String, String>): String {
@@ -188,42 +188,10 @@ class MainController {
             return "This no valid token. Fix brain!";
         }
 
-        val notes = noteRepository?.findAllByUserIdSinceDate(accessToken.userId, dateLastSync!!);
-
-        response.status = HttpServletResponse.SC_OK
-        val json = ObjectMapper().registerModule(KotlinModule())
-        return json.writeValueAsString(notes)
-    }
-
-    @CrossOrigin
-    @RequestMapping("/api/setNotes")
-    @ResponseBody
-    fun setNotes(response: HttpServletResponse,
-                 model: MutableMap<String, Any>,
-                 @RequestHeader("token") token: String?,
-                 @RequestBody jsonData: String?): String {
-
-        response.status = HttpServletResponse.SC_BAD_REQUEST
-
-        if (token == null || token.length < 16 || jsonData == null) {
-            return "More parameters! Bad brain. Fix brain.";
-        }
-
-        var accessToken: AccessToken? = null
-        if(accessTokenRepository?.existsByToken(token)!!) {
-            accessToken = accessTokenRepository.findByToken(token)
-        }
-
-        if (accessToken == null || !accessToken.valid) {
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
-            return "This no valid token. Fix brain!";
-        }
-
-
         val json = ObjectMapper().registerModule(KotlinModule())
         val list: List<Note> = json.readValue(jsonData)
         for(note in list) {
-            note.dateSync = Utilities.getCurrentDateString()
+            note.dateSync = Utilities.getDateStringNow()
             note.userId = accessToken.userId
             val noteExists = noteRepository?.existsByUuid(note.uuid!!)
             if(!noteExists!!) {
@@ -237,11 +205,12 @@ class MainController {
             }
         }
 
-        response.status = HttpServletResponse.SC_OK
-        return json.writeValueAsString("OK")
-    }
+        val notes = noteRepository?.findAllByUserIdSinceDate(accessToken.userId, dateLastSync!!)
 
-    // TODO delete notes by uuid
+        response.status = HttpServletResponse.SC_OK
+        val json = ObjectMapper().registerModule(KotlinModule())
+        return json.writeValueAsString(notes)
+    }
 
     @CrossOrigin
     @ResponseBody
