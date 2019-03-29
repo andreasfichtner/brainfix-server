@@ -12,6 +12,6 @@ class User {
     var username: String = ""
     var passwordHash: String = ""
     var failedLogins: Long = 0
-    var lastLogin: String = 0
+    var lastFailedLogin: String = "0"
     var isActive: Boolean = false
 }

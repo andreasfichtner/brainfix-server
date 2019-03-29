@@ -17,7 +17,7 @@ class Utilities {
 
         fun getDateStringYesterday(): String {
             var yesterday = LocalDate.now().minusDays(1)
-            val formattedYesterday = yesterday.format(DateTimeFormatter.ISO_INSTANT)
+            return yesterday.format(DateTimeFormatter.ISO_INSTANT)
         }
 
         fun getDateStringNow(): String {

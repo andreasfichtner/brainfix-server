@@ -104,9 +104,10 @@ class MainController {
         if (!passwordEncoder.matches(password, user?.passwordHash)) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             user.failedLogins += 1
+            user.lastFailedLogin = Utilities.getDateStringNow()
             userRepository?.save(user)
             return "Password incorrect. Fix brain!"
-        } else if (user.failedLogins > 0 && user.lastLogin > Utilities.getDateStringYesterday()) {
+        } else if (user.failedLogins > 0 && user.lastFailedLogin > Utilities.getDateStringYesterday()) {
             user.failedLogins = 0
             userRepository?.save(user)
         }
@@ -171,10 +172,11 @@ class MainController {
                  @RequestBody data : Map<String, String>): String {
 
         var dateLastSync = data["lastSync"]
+        var jsonData = data["notes"]
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
 
-        if (token == null || token.length < 16 || dateLastSync == null) {
+        if (token == null || token.length < 16 || dateLastSync == null || jsonData == null) {
             return "No many parameter. Fix brain!";
         }
 
@@ -189,7 +191,7 @@ class MainController {
         }
 
         val json = ObjectMapper().registerModule(KotlinModule())
-        val list: List<Note> = json.readValue(jsonData)
+        val list: List<Note> = json.readValue<List<Note>>(jsonData)
         for(note in list) {
             note.dateSync = Utilities.getDateStringNow()
             note.userId = accessToken.userId
@@ -208,7 +210,6 @@ class MainController {
         val notes = noteRepository?.findAllByUserIdSinceDate(accessToken.userId, dateLastSync!!)
 
         response.status = HttpServletResponse.SC_OK
-        val json = ObjectMapper().registerModule(KotlinModule())
         return json.writeValueAsString(notes)
     }
 
