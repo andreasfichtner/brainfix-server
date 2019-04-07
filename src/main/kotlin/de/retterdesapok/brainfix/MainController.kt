@@ -77,7 +77,6 @@ class MainController {
     @RequestMapping("/api/login")
     @ResponseBody
     fun doLogin(response: HttpServletResponse,
-                model: MutableMap<String, Any>,
                 @RequestBody data : Map<String, String>): String {
 
 
@@ -87,7 +86,7 @@ class MainController {
         var user: User? = null
 
         if(username != null && userRepository?.existsByUsername(username)!!) {
-            user = userRepository?.findByUsername(username)
+            user = userRepository.findByUsername(username)
         }
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -100,7 +99,7 @@ class MainController {
 
         val passwordEncoder = BCryptPasswordEncoder()
 
-        if (!passwordEncoder.matches(password, user?.passwordHash)) {
+        if (!passwordEncoder.matches(password, user.passwordHash)) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             user.failedLogins += 1
             user.lastFailedLogin = Utilities.getDateStringNow()
@@ -112,7 +111,7 @@ class MainController {
         }
 
         val accessToken = AccessToken()
-        accessToken.userId = user!!.id!!
+        accessToken.userId = user.id!!
         val createdToken = UUID.randomUUID().toString()
         accessToken.token = createdToken
         accessToken.valid = true
@@ -126,12 +125,11 @@ class MainController {
     @RequestMapping("/api/register")
     @ResponseBody
     fun doRegister(response: HttpServletResponse,
-                model: MutableMap<String, Any>,
                    @RequestBody data : Map<String, String>): String {
 
         var username = data["username"]
         var password = data["password"]
-        var user: User? = null
+        var user: User?
 
         if(username == null || password == null ||password.length == 0) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -146,13 +144,13 @@ class MainController {
         val passwordEncoder = BCryptPasswordEncoder()
 
         user = User()
-        user.username = username!!
+        user.username = username
         user.passwordHash = passwordEncoder.encode(password)
         user.isActive = true
-        userRepository?.save(user)
+        userRepository.save(user)
 
         val accessToken = AccessToken()
-        accessToken.userId = user!!.id!!
+        accessToken.userId = user.id!!
         val createdToken = UUID.randomUUID().toString()
         accessToken.token = createdToken
         accessToken.valid = true
@@ -166,16 +164,15 @@ class MainController {
     @RequestMapping("/api/notes")
     @ResponseBody
     fun syncNotes(response: HttpServletResponse,
-                 model: MutableMap<String, Any>,
                  @RequestHeader("token") token: String?,
-                 @RequestBody data : Map<String, String>): String {
+                 @RequestBody data : Map<String, kotlin.Any>): String {
 
-        var dateLastSync = data["lastSync"]
-        var jsonData = data["notes"]
+        var dateLastSync = data["lastSync"] as String
+        var notesList = data["notes"] as List<Note>
 
         response.status = HttpServletResponse.SC_BAD_REQUEST
 
-        if (token == null || token.length < 16 || dateLastSync == null || jsonData == null) {
+        if (token == null || token.length < 16) {
             return "No many parameter. Fix brain!";
         }
 
@@ -190,8 +187,7 @@ class MainController {
         }
 
         val json = ObjectMapper().registerModule(KotlinModule())
-        val list: List<Note> = json.readValue<List<Note>>(jsonData)
-        for(note in list) {
+        for(note in notesList) {
             note.dateSync = Utilities.getDateStringNow()
             note.synchronized = true
             note.userId = accessToken.userId
@@ -207,7 +203,7 @@ class MainController {
             }
         }
 
-        val notes = noteRepository?.findAllByUserIdSinceDate(accessToken.userId, dateLastSync!!)
+        val notes = noteRepository?.findAllByUserIdSinceDate(accessToken.userId, dateLastSync)
 
         response.status = HttpServletResponse.SC_OK
         return json.writeValueAsString(notes)
@@ -215,7 +211,7 @@ class MainController {
 
     @CrossOrigin
     @ResponseBody
-    fun errorPage(model: MutableMap<String, Any>): String {
+    fun errorPage(): String {
         return "error"
     }
 }
